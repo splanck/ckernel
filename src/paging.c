@@ -107,6 +107,50 @@ void free_frame(page_t *page)
     }
 }
 
+void init_paging() {
+   monitor_write("Init paging\n");
+
+   u32int mem_end_page = 0x10000000; // max of memory
+                             // currently 16MB
+
+   nframes = mem_end_page / 0x1000;
+   frames = (u32int *)kmalloc(INDEX_FROM_BIT(nframes));
+   memset(frames, 0, INDEX_FROM_BIT(nframes));
+
+   // make page dir
+   kernel_directory = (page_directory_t *)kmalloc_a(sizeof(page_directory_t));
+   memset(kernel_directory, 0, sizeof(page_directory_t));
+   current_directory = kernel_directory;
+   kernel_directory->physicalAddr = (u32int)kernel_directory->tablesPhysical;
+
+   // identity map from 0x0 to end memory
+   int i = 0;
+   while (i < placement_address) {
+      alloc_frame(get_page(i, 1, kernel_directory), 0, 0);
+      i += 0x1000;
+   }
+
+   // register fault handler
+   register_interrupt_handler(14, page_fault);
+
+   //firstSwitch = 1; // first time switching directory
+   switch_page_directory(kernel_directory);
+}
+
+void switch_page_directory(page_directory_t *dir)
+{
+    current_directory = dir;
+    asm volatile("mov %0, %%cr3":: "r"(&dir->physicalAddr));
+    u32int cr0;
+    asm volatile("mov %%cr0, %0": "=r"(cr0));
+    cr0 |= 0x80000000; // Enable paging!
+    monitor_write_hex(cr0);
+    monitor_write_hex(&dir->physicalAddr);
+    //return;
+    //asm volatile("mov %0, %%cr0":: "r"(cr0));
+}
+
+/*
 void initialise_paging()
 {
     // The size of physical memory. For the moment we 
@@ -150,9 +194,11 @@ void switch_page_directory(page_directory_t *dir)
     asm volatile("mov %%cr0, %0": "=r"(cr0));
     cr0 |= 0x80000000; // Enable paging!
     monitor_write_hex(cr0);
+    monitor_write_hex(&dir->tablesPhysical);
     return;
     asm volatile("mov %0, %%cr0":: "r"(cr0));
 }
+*/
 
 page_t *get_page(u32int address, int make, page_directory_t *dir)
 {

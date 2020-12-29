@@ -1,6 +1,7 @@
 // common.c -- Defines some global functions.
 
 #include "monitor.h"
+#include "kheap.h"
 #include "common.h"
 
 // Write a byte out to the specified port.
@@ -37,6 +38,53 @@ void memset(void *dest, u8int val, u32int len)
     u8int *temp = (u8int *)dest;
     for ( ; len != 0; len--) *temp++ = val;
 }
+
+void *memmove(void* dest, const void* src, unsigned int n)
+{
+    char *pDest = (char *)dest;
+    const char *pSrc =( const char*)src;
+    //allocate memory for tmp array
+    char *tmp  = (char *)kmalloc(sizeof(char ) * n);
+    if(!tmp)
+    {
+        return 0;
+    }
+    else
+    {
+        unsigned int i = 0;
+        // copy src to tmp array
+        for(i =0; i < n ; ++i)
+        {
+            *(tmp + i) = *(pSrc + i);
+        }
+        //copy tmp to dest
+        for(i =0 ; i < n ; ++i)
+        {
+            *(pDest + i) = *(tmp + i);
+        }
+        //free(tmp); //free allocated memory
+    }
+    return dest;
+}
+
+int memcmp(const char *cs, const char *ct, size_t n)
+{
+    size_t i;   
+
+    for (i = 0; i < n; i++, cs++, ct++)
+    {
+        if (*cs < *ct)
+        {
+            return -1;
+        }
+        else if (*cs > *ct)
+        {
+            return 1;
+        }
+    }
+
+    return 0;  
+ } 
 
 // Compare two strings. Should return -1 if 
 // str1 < str2, 0 if they are equal or 1 otherwise.

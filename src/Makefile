@@ -1,5 +1,5 @@
 SOURCES=boot.o main.o monitor.o common.o gdt.o isr.o descriptor_tables.o interrupt.o timer.o kheap.o paging.o
-CFLAGS=-nostdlib -nostdinc -fno-builtin -fno-stack-protector -m32
+CFLAGS=-nostdlib -nostdinc -fno-builtin -fno-stack-protector -ffreestanding -m32
 
 LDFLAGS=-Tlink.ld
 ASFLAGS=-felf

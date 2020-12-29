@@ -33,9 +33,18 @@ mboot:
 start:
   push ebx                   ; Load multiboot header location
 
+  mov esp, kernel_stack + KERNEL_STACK_SIZE
+
   ; Execute the kernel:
   cli                         ; Disable interrupts.
   call main                   ; call our main() function.
   jmp $                       ; Enter an infinite loop, to stop the processor
                               ; executing whatever rubbish is in the memory
                               ; after our kernel! 
+
+                              KERNEL_STACK_SIZE equ 4096                  ; size of stack in bytes
+
+section .bss
+align 4                                     ; align at 4 bytes
+kernel_stack:                               ; label points to beginning of memory
+    resb KERNEL_STACK_SIZE                  ; reserve stack for the kernel
